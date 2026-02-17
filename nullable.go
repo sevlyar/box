@@ -83,27 +83,17 @@ func (n Nullable[T]) MarshalJSON() ([]byte, error) {
 		return nullStrBytes, nil
 	}
 
-	if casted, ok := any(&n.v).(json.Marshaler); ok {
-		return casted.MarshalJSON()
-	}
-
-	return json.Marshal(n.v)
+	return marshalJSON(n.v)
 }
 
 func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
 	if bytes.Equal(data, nullStrBytes) {
 		*n = Null[T]()
-	}
-
-	if casted, ok := any(&n.v).(json.Unmarshaler); ok {
-		if err := casted.UnmarshalJSON(data); err != nil {
-			return err
-		}
-
-		n.valid = true
-
 		return nil
 	}
 
-	return json.Unmarshal(data, &n.v)
+	err := unmarshalJSON(data, &n.v)
+	n.valid = err == nil
+
+	return err
 }

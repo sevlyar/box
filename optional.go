@@ -6,12 +6,18 @@ import (
 	"encoding/json"
 )
 
-// Optional presents optional value of type T.
+// Optional represents optional value of type T.
 // Optional value must be Some (i.e. having a value) or None (i.e. doesn't have a value).
 // Optional is a comparable value-type. Don't recommend to use with big or complex types.
 // Zero value of Optional[T] is None.
 //
-// Optional type implements (un)marshalling and database value conversion methods.
+// Optional implements sql.Scanner and driver.Valuer interfaces.
+// To database value conversion works, T should be one of the types accepted by driver.Value
+// or implements the interfaces. None in database presented as NULL.
+//
+// Optional implements (un)marshalling from/to JSON. None value don't have presentation in JSON,
+// so structure fields of type Optional should be annotated by `json:",omitzero"`
+// to skip fields with the value. Calling of marshalling methods for None value will cause panic.
 type Optional[T any] struct {
 	some bool
 	v    T
@@ -97,23 +103,12 @@ func (opt Optional[T]) MarshalJSON() ([]byte, error) {
 		panic("unable to marshal zero Optional[T] to JSON, use `json:\",omitzero\"` annotation for struct fields")
 	}
 
-	if casted, ok := any(&opt.v).(json.Marshaler); ok {
-		return casted.MarshalJSON()
-	}
-
-	return json.Marshal(opt.v)
+	return marshalJSON(opt.v)
 }
 
 func (opt *Optional[T]) UnmarshalJSON(data []byte) error {
-	if casted, ok := any(&opt.v).(json.Unmarshaler); ok {
-		if err := casted.UnmarshalJSON(data); err != nil {
-			return err
-		}
+	err := unmarshalJSON(data, &opt.v)
+	opt.some = err == nil
 
-		opt.some = true
-
-		return nil
-	}
-
-	return json.Unmarshal(data, &opt.v)
+	return nil
 }

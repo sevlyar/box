@@ -1,10 +1,13 @@
 package box
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Zero value of Optional type is None.
 // Use Some and None functions to construct value of Optional type.
-func ExampleOptional_ctor() {
+func ExampleOptional_constructor() {
 	var none1 Optional[string]
 	none2 := None[string]()
 	some := Some("value")
@@ -50,4 +53,29 @@ func ExampleOptional_handle() {
 	// Output:
 	// 1
 	// 2
+}
+
+// Use `json:",omitzero"` annotation for structure fields of type Optional to marshal None value properly.
+func ExampleOptional_marshalling() {
+	type User struct {
+		FirstName  string
+		LastName   string
+		MiddleName Optional[string] `json:",omitzero"`
+		Age        Optional[int]    `json:",omitzero"`
+	}
+
+	u := User{
+		FirstName: "John",
+		LastName:  "Doe",
+		Age:       Some(18),
+	}
+
+	b, _ := json.MarshalIndent(&u, "", "  ")
+	fmt.Println(string(b))
+	// Output:
+	// {
+	//   "FirstName": "John",
+	//   "LastName": "Doe",
+	//   "Age": 18
+	// }
 }
