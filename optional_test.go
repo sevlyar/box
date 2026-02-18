@@ -12,26 +12,25 @@ func ExampleOptional_constructor() {
 	none2 := None[string]()
 	some := Some("value")
 
-	fmt.Println(none1.IsNone())
-	fmt.Println(none2.IsNone())
-	fmt.Println(some.IsSome())
+	fmt.Println(
+		none1.IsNone(),
+		none2.IsNone(),
+		some.IsSome(),
+	)
 	// Output:
-	// true
-	// true
-	// true
+	// true true true
 }
 
 // Optional is a comparable value-type.
 func ExampleOptional_compare() {
-	fmt.Println(Some("a") == Some("a"))
-	fmt.Println(None[string]() == None[string]())
-	fmt.Println(Some("a") != Some("b"))
-	fmt.Println(Some("a") != None[string]())
+	fmt.Println(
+		Some("a") == Some("a"),
+		None[string]() == None[string](),
+		Some("a") != Some("b"),
+		Some("a") != None[string](),
+	)
 	// Output:
-	// true
-	// true
-	// true
-	// true
+	// true true true true
 }
 
 // Get method allows you to get the underlying value,
@@ -55,27 +54,54 @@ func ExampleOptional_check() {
 	// 2
 }
 
-// Use `json:",omitzero"` annotation for structure fields of type Optional to marshal None value properly.
+// None presented in JSON as null. Use annotation `json:",omitzero"`
+// to omit fields with None value from the encoding.
 func ExampleOptional_marshalling() {
 	type User struct {
 		FirstName  string
 		LastName   string
 		MiddleName Optional[string] `json:",omitzero"`
-		Age        Optional[int]    `json:",omitzero"`
+		Age        Optional[int]
 	}
 
 	u := User{
 		FirstName: "John",
 		LastName:  "Doe",
-		Age:       Some(18),
 	}
 
 	b, _ := json.MarshalIndent(&u, "", "  ")
+
 	fmt.Println(string(b))
 	// Output:
 	// {
 	//   "FirstName": "John",
 	//   "LastName": "Doe",
-	//   "Age": 18
+	//   "Age": null
 	// }
+}
+
+// Use Optional2 type to work with twice optional values,
+// when you need to build a modifying form of object with optional fields.
+func ExampleOptional2_use() {
+	var form struct {
+		A Optional2[string]
+		B Optional2[string]
+		C Optional2[string]
+	}
+
+	input := `
+	{
+		"A": "str",
+		"B": null
+	}`
+
+	_ = json.Unmarshal([]byte(input), &form)
+
+	fmt.Println(
+		form.A == Some2(Some("str")),
+		form.B == Some2(None[string]()),
+		form.C == None2[string](),
+	)
+	// Output:
+	// true true true
 }
