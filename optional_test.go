@@ -37,7 +37,7 @@ func ExampleOptional_compare() {
 // Get method allows you to get the underlying value,
 // but checks whether the value is present and panics if it is not.
 // So you should protect the Get method call with check the value is Some.
-func ExampleOptional_handle() {
+func ExampleOptional_check() {
 	list := []Optional[int]{
 		Some(1),
 		None[int](),
