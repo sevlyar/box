@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"database/sql/driver"
-	"encoding"
 	"encoding/json"
 )
 
@@ -97,19 +96,7 @@ func (opt Optional[T]) MarshalJSON() ([]byte, error) {
 		return nullStrBytes, nil
 	}
 
-	return marshalJSON(opt.v)
-}
-
-func marshalJSON[T any](v T) ([]byte, error) {
-	if casted, ok := any(v).(json.Marshaler); ok {
-		return casted.MarshalJSON()
-	}
-
-	if casted, ok := any(v).(encoding.TextMarshaler); ok {
-		return casted.MarshalText()
-	}
-
-	return json.Marshal(v)
+	return json.Marshal(opt.v)
 }
 
 func (opt *Optional[T]) UnmarshalJSON(data []byte) error {
@@ -118,22 +105,10 @@ func (opt *Optional[T]) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	err := unmarshalJSON(data, &opt.v)
+	err := json.Unmarshal(data, &opt.v)
 	opt.some = err == nil
 
 	return nil
-}
-
-func unmarshalJSON[T any](data []byte, ptr *T) error {
-	if casted, ok := any(ptr).(json.Unmarshaler); ok {
-		return casted.UnmarshalJSON(data)
-	}
-
-	if casted, ok := any(ptr).(encoding.TextUnmarshaler); ok {
-		return casted.UnmarshalText(data)
-	}
-
-	return json.Unmarshal(data, ptr)
 }
 
 // Optional2 presents twice optional value: Optional[Optional[T]].
